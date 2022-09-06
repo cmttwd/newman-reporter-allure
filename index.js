@@ -99,9 +99,6 @@ class AllureReporter {
     }
 
     request(err, args) {
-        if (err) {
-            return
-        }
         const req = args.request;
         let url = req.url.protocol + "://" + req.url.host.join('.');
         if (req.url.path !== undefined) {
@@ -109,24 +106,42 @@ class AllureReporter {
                 url = url + "/" + req.url.path.join('/');
             }
         }
-        const res = args.response;
-        const resp_stream = res.stream;
-        const resp_body = Buffer.from(resp_stream).toString();
         this.runningItems[this.runningItems.length - 1].pm_item.request_data = {
             url: url,
             method: req.method,
             body: req.body,
             headers: req.headers
         };
-        this.runningItems[this.runningItems.length - 1].pm_item.response_data = {
-            status: res.status,
-            code: res.code,
-            body: resp_body,
-            headers: res.headers,
-            cookies: res.cookies,
-            responseTime: res.responseTime,
-            responseSize: res.responseSize
-        };
+
+        if(err){
+            this.runningItems[this.runningItems.length - 1].pm_item.response_data = {
+                status: err,
+                code: 'REQUEST ERROR',
+                body: '',
+                headers: '',
+                cookies: '',
+                responseTime: '',
+                responseSize: ''
+            };
+            this.runningItems[this.runningItems.length - 1].pm_item.passed = false;
+            this.runningItems[this.runningItems.length - 1].pm_item.errors.push(err);
+            
+        } else {
+            const res = args.response;
+            const resp_stream = res.stream;
+            const resp_body = Buffer.from(resp_stream).toString();
+
+            this.runningItems[this.runningItems.length - 1].pm_item.response_data = {
+                status: res.status,
+                code: res.code,
+                body: resp_body,
+                headers: res.headers,
+                cookies: res.cookies,
+                responseTime: res.responseTime,
+                responseSize: res.responseSize
+            };
+        }
+
     }
 
     startStep(name) {
@@ -226,15 +241,20 @@ class AllureReporter {
 
         fullName = this.getFullName(this.currentNMGroup);
 
+        
         // Labels: testClass
         var testClass = fullName;
-        if (testClass !== undefined) {
+        if (testClass !== undefined 
+            && !(this.reporterOptions.noTestClass === true)
+            ) {
             allure_test.addLabel(LabelName.TEST_CLASS, testClass);
         }
 
         // Labels: testMethod
         var testMethod = args.item.name;
-        if (testMethod !== undefined) {
+        if (testMethod !== undefined
+            && !(this.reporterOptions.noTestMethod === true)
+            ) {
             allure_test.addLabel(LabelName.TEST_METHOD, testMethod);
         }
 
@@ -255,23 +275,29 @@ class AllureReporter {
                 parentSuite = fullName;
             }
         }
-
+        
         // Labels: parentSuite
         // Labels: feature
-        if (parentSuite !== undefined) {
+        if (parentSuite !== undefined
+            && !(this.reporterOptions.noFeatures === true)
+            ) {
             parentSuite = parentSuite.charAt(0).toUpperCase() + parentSuite.slice(1);
             allure_test.addLabel(LabelName.PARENT_SUITE, parentSuite);
             allure_test.addLabel(LabelName.FEATURE, parentSuite);
         }
-
+        
         // Labels: story
-        if (suite !== undefined) {
+        if (suite !== undefined
+            && !(this.reporterOptions.noStories === true)
+            ) {
             suite = suite.charAt(0).toUpperCase() + suite.slice(1);
             allure_test.addLabel(LabelName.STORY, suite);
         }
-
+        
         // Labels: subSuite
-        if (subSuites !== undefined) {
+        if (subSuites !== undefined
+            && !(this.reporterOptions.noSubSuites === true)
+            ) {
             if (subSuites.length > 0) {
                 let captalizedSubSuites = [];
 
@@ -281,7 +307,7 @@ class AllureReporter {
                 allure_test.addLabel(LabelName.SUB_SUITE, captalizedSubSuites.join(" > "));
             }
         }
-
+        
         // Labels: suite
         let path;
         if (args.item.request.url.path !== undefined) {
@@ -289,7 +315,9 @@ class AllureReporter {
                 path = args.item.request.url.path.join('/');
             }
         }
-        if (path !== undefined)
+        if (path !== undefined
+            && !(this.reporterOptions.noTestSuite === true)
+            )
             allure_test.addLabel(LabelName.SUITE, path);
 
 
@@ -434,7 +462,6 @@ class AllureReporter {
         }
         if (bodyModeProp === "raw") {
             bodyModePropObj = rItem.pm_item.request_data.body[bodyModeProp];
-//            console.log(bodyModePropObj); // Вывод в консоль тела запроса
         } else {
             bodyModePropObj = ""
         }
@@ -507,8 +534,23 @@ class AllureReporter {
             });
 
         } else {
-            this.passTestCase(rItem.allure_test);
+            // if we have pm_item.errors but not pm_item.failedAssertions, fail test case
+            if (rItem.pm_item.errors.length > 0){
+                const err = rItem.pm_item.errors
+                            .filter(e => e != null)
+                            .map(e => e)
+                            .join("\n");
+
+                this.failTestCase(rItem.allure_test, {
+                    name: "Pre-assertions error",
+                    message: err,
+                    skipped: rItem.pm_item.skipped
+                });
+            } else {
+                this.passTestCase(rItem.allure_test);
+            }
         }
+
         this.runningItems.pop();
     }
 

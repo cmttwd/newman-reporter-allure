@@ -1,25 +1,45 @@
 This is a fork of https://github.com/dvargas46/newman-reporter-allure
 
-## Особенности
+## Additions on top of dvargas46 version
+
+- Implemented support Allure TestOps:
+  - Added Labels: testClass, testMethod, epic, owner, layer.
+  - Changed the logic of the formation of story and suite parameters.
 
 
-Реализована поддержка Allure TestOps:
-- Добавлены следующие Labels: testClass, testMethod, epic, owner, layer.
-- Изменена логика формирования story и suite.
+- There are no problems with the formation of Russian-language test names.
 
-Отсуттвуют проблемы с формированием русскоязычных имён тестов.
 
-Добавлена обработка test-scripts errors.
+- Added handling of test-scripts errors.
 
-Добавлена возможность установки статуса "SKIPPED" через 'pm.test.skip("Skip message")'.
 
-## Установка
+- Added ability to set "SKIPPED" status via 'pm.test.skip("Skip message")'.
+
+
+- Added handling for case where sending request fails and no response is generated.
+Previously reporter would silently exit 'on request' handler and then crash to stack trace in 'on item' attempting to access undefined response_data. Now the report will handle such faults and mark them as broken.
+
+  (thanks @akorov)
+
+
+- Added support for optional parameters to skip each label to fine-tune needed options:
+    ```
+    --reporter-allure-no-test-class
+    --reporter-allure-no-test-method
+    --reporter-allure-no-features
+    --reporter-allure-no-stories
+    --reporter-allure-no-sub-suites
+    --reporter-allure-no-test-suite
+    ```
+    (thanks @akorov)
+
+## Installation
 
 ```bash
 $ npm install -g https://github.com/cmttwd/newman-reporter-allure.git
 ```
 
-## Запуск
+## Run
 
 ```bash
 $ newman run <Collection> -e <Environment> -r allure
@@ -28,20 +48,20 @@ $ newman run <Collection> -e <Environment> -r allure --reporter-allure-export <a
 ```
 
 ```bash
---reporter-allure-export <allure-results-out-dir> - путь результов отчета
---reporter-allure-epic <Epic name> - установка параметра Epic для всех тестов запуска
---reporter-allure-owner <Owner name> - установка Владельца/Ответсвенного для всех тестов запуска
---reporter-allure-layer <Layer> - доп параметр
+--reporter-allure-export <allure-results-out-dir> - results
+--reporter-allure-epic <Epic name> - set Epic for all tests in the run
+--reporter-allure-owner <Owner name> - set Owner for all tests
+--reporter-allure-layer <Layer> - set 'Layer' parameter for all tests
 ```
 
-## Генерация отчета
+## Generating report
 
 ```bash
 $ allure generate --clean
 $ allure generate --clean <allure-results-out-dir>
 ```
 
-## Открытие сгенерированного отчета
+## Viewing report
 ```bash
 $ allure open
 $ allure open <allure-report-dir>
