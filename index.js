@@ -116,7 +116,7 @@ class AllureReporter {
         if(err){
             this.runningItems[this.runningItems.length - 1].pm_item.response_data = {
                 status: err,
-                code: err,
+                code: 'REQUEST ERROR',
                 body: '',
                 headers: '',
                 cookies: '',
@@ -141,7 +141,6 @@ class AllureReporter {
                 responseSize: res.responseSize
             };
         }
-        //console.log("REQUEST_PM_ITEM=" + JSON.stringify(this.runningItems[this.runningItems.length - 1].pm_item,null, 4));
 
     }
 
@@ -463,7 +462,6 @@ class AllureReporter {
         }
         if (bodyModeProp === "raw") {
             bodyModePropObj = rItem.pm_item.request_data.body[bodyModeProp];
-//            console.log(bodyModePropObj); // Вывод в консоль тела запроса
         } else {
             bodyModePropObj = ""
         }
