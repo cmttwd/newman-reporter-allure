@@ -1,6 +1,6 @@
 {
   "name": "newman-reporter-allure",
-  "version": "1.0.8",
+  "version": "1.1.0",
   "description": "newman reporter for Allure",
   "main": "index.js",
   "scripts": {
@@ -20,7 +20,7 @@
     "url": "https://github.com/cmttwd/newman-reporter-allure.git"
   },
   "author": "cmttwd",
-  "license": "ISC",
+  "license": "GPL-3.0 license",
   "dependencies": {
     "allure-js-commons": "^2.0.0-beta.6",
     "lodash": "^4.17.15"
